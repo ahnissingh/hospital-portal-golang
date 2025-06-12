@@ -56,23 +56,27 @@ func TestAuthService_Login_Success(t *testing.T) {
 	// Create mock repository
 	mockRepo := new(MockUserRepository)
 
-	// Create test user
+	// Create auth service with mock repository
+	authService := services.NewAuthService(mockRepo)
+
+	// Hash the password we'll use in the test
+	hashedPassword, err := authService.HashPassword("password123")
+	assert.NoError(t, err)
+
+	// Create test user with the hashed password
 	user := &models.User{
 		Username:     "testuser",
-		PasswordHash: "$2a$10$1qAz2wSx3eDc4rFv5tGb5edDmJMuYFJx4hQ/g8MgbxEP6Y.M5uy7y", // hashed "password123"
+		PasswordHash: hashedPassword,
 		Role:         models.RoleReceptionist,
 	}
 
 	// Set up expectations
 	mockRepo.On("FindByUsername", "testuser").Return(user, nil)
 
-	// Create auth service with mock repository
-	authService := services.NewAuthService(mockRepo)
-
 	// Create login request
 	loginRequest := models.LoginRequest{
 		Username: "testuser",
-		Password: "admin123", // This matches the hash above
+		Password: "password123",
 	}
 
 	// Call the method being tested
@@ -93,18 +97,22 @@ func TestAuthService_Login_InvalidCredentials(t *testing.T) {
 	// Create mock repository
 	mockRepo := new(MockUserRepository)
 
-	// Create test user
+	// Create auth service with mock repository
+	authService := services.NewAuthService(mockRepo)
+
+	// Hash the password we'll use in the test
+	hashedPassword, err := authService.HashPassword("password123")
+	assert.NoError(t, err)
+
+	// Create test user with the hashed password
 	user := &models.User{
 		Username:     "testuser",
-		PasswordHash: "$2a$10$1qAz2wSx3eDc4rFv5tGb5edDmJMuYFJx4hQ/g8MgbxEP6Y.M5uy7y", // hashed "password123"
+		PasswordHash: hashedPassword,
 		Role:         models.RoleReceptionist,
 	}
 
 	// Set up expectations
 	mockRepo.On("FindByUsername", "testuser").Return(user, nil)
-
-	// Create auth service with mock repository
-	authService := services.NewAuthService(mockRepo)
 
 	// Create login request with wrong password
 	loginRequest := models.LoginRequest{
