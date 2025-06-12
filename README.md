@@ -86,19 +86,29 @@ createdb hospital
 Create a `.env` file in the root directory with the following content:
 
 ```
-# Database configuration
+# ===============================
+# Database Configuration
+# ===============================
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=hospital
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
 
-# JWT configuration
-JWT_SECRET_KEY=your_secret_key_here
+# For production - replace with actual credentials
+DB_URL=postgres://your_user:your_password@your_host:your_port/your_db_name?sslmode=require
 
-# Server configuration
+# ===============================
+# JWT Configuration
+# ===============================
+JWT_SECRET_KEY=your_jwt_secret_key
+
+# ===============================
+# Server Configuration
+# ===============================
 PORT=8080
 GIN_MODE=debug
+
 ```
 
 ### Running the Application
