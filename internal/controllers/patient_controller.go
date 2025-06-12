@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"math"
 	"net/http"
 	"strconv"
 
@@ -128,25 +129,46 @@ func (c *PatientController) UpdatePatient(ctx *gin.Context) {
 		return
 	}
 
-	var patient models.Patient
+	var request models.UpdatePatientRequest
 
 	// Bind and validate request body
-	if err := ctx.ShouldBindJSON(&patient); err != nil {
+	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Set ID from path
-	patient.ID = uint(id)
+	// Get existing patient
+	existingPatient, err := c.patientService.GetByID(uint(id))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Patient not found"})
+		return
+	}
+
+	// Update only the fields that are provided in the request
+	if request.Name != "" {
+		existingPatient.Name = request.Name
+	}
+	if request.Age != 0 {
+		existingPatient.Age = request.Age
+	}
+	if request.Gender != "" {
+		existingPatient.Gender = request.Gender
+	}
+	if request.ContactInfo != "" {
+		existingPatient.ContactInfo = request.ContactInfo
+	}
+	if request.MedicalNotes != "" {
+		existingPatient.MedicalNotes = request.MedicalNotes
+	}
 
 	// Update patient
-	err = c.patientService.Update(&patient)
+	err = c.patientService.Update(existingPatient)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, patient.ToResponse())
+	ctx.JSON(http.StatusOK, existingPatient.ToResponse())
 }
 
 // @Summary Update medical notes
@@ -233,23 +255,41 @@ func (c *PatientController) DeletePatient(ctx *gin.Context) {
 // @Description List all patients (Both Receptionist and Doctor)
 // @Tags patients
 // @Produce json
-// @Success 200 {array} models.PatientResponse
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Number of items per page (default: 10, max: 100)"
+// @Success 200 {object} models.PaginatedResponse[models.PatientResponse]
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /api/patients [get]
 // @Security Bearer
 func (c *PatientController) ListPatients(ctx *gin.Context) {
-	// Get patients
-	patients, err := c.patientService.List()
+	// Get pagination parameters
+	page, _ := strconv.Atoi(ctx.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(ctx.DefaultQuery("limit", "10"))
+
+	// Get patients with pagination
+	patients, total, err := c.patientService.List(page, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve patients"})
 		return
 	}
 
 	// Convert to response
-	var response []models.PatientResponse
+	var responseData []models.PatientResponse
 	for _, patient := range patients {
-		response = append(response, patient.ToResponse())
+		responseData = append(responseData, patient.ToResponse())
+	}
+
+	// Calculate total pages
+	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+
+	// Create paginated response
+	response := models.PaginatedResponse[models.PatientResponse]{
+		Data:       responseData,
+		Page:       page,
+		Limit:      limit,
+		Total:      total,
+		TotalPages: totalPages,
 	}
 
 	ctx.JSON(http.StatusOK, response)

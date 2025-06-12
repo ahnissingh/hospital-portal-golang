@@ -88,3 +88,12 @@ type PatientSearchRequest struct {
 	Gender      Gender `form:"gender" binding:"omitempty,oneof=male female other"`
 	ContactInfo string `form:"contact_info" binding:"omitempty"`
 }
+
+// PaginatedResponse is a generic struct for paginated responses
+type PaginatedResponse[T any] struct {
+	Data       []T   `json:"data"`
+	Page       int   `json:"page"`
+	Limit      int   `json:"limit"`
+	Total      int64 `json:"total"`
+	TotalPages int   `json:"total_pages"`
+}

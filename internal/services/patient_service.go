@@ -14,7 +14,7 @@ type PatientService interface {
 	Update(patient *models.Patient) error
 	UpdateMedicalNotes(id uint, medicalNotes string) error
 	Delete(id uint) error
-	List() ([]models.Patient, error)
+	List(page, limit int) ([]models.Patient, int64, error)
 	Search(params models.PatientSearchRequest) ([]models.Patient, error)
 }
 
@@ -90,9 +90,20 @@ func (s *patientService) Delete(id uint) error {
 	return s.patientRepo.Delete(id)
 }
 
-// List returns all patients
-func (s *patientService) List() ([]models.Patient, error) {
-	return s.patientRepo.List()
+// List returns all patients with pagination
+func (s *patientService) List(page, limit int) ([]models.Patient, int64, error) {
+	// Validate pagination parameters
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	return s.patientRepo.List(page, limit)
 }
 
 // Search searches for patients based on search parameters
