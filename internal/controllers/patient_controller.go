@@ -41,9 +41,9 @@ func NewPatientController(patientService services.PatientService, authMiddleware
 func (c *PatientController) CreatePatient(ctx *gin.Context) {
 	var request models.CreatePatientRequest
 
-	// Bind request body
+	// Bind and validate request body
 	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -54,7 +54,7 @@ func (c *PatientController) CreatePatient(ctx *gin.Context) {
 		return
 	}
 
-	// Create patient
+	// Map request to patient model
 	patient := &models.Patient{
 		Name:         request.Name,
 		Age:          request.Age,
@@ -128,40 +128,19 @@ func (c *PatientController) UpdatePatient(ctx *gin.Context) {
 		return
 	}
 
-	var request models.UpdatePatientRequest
+	var patient models.Patient
 
-	// Bind request body
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+	// Bind and validate request body
+	if err := ctx.ShouldBindJSON(&patient); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Get existing patient
-	patient, err := c.patientService.GetByID(uint(id))
-	if err != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "Patient not found"})
-		return
-	}
-
-	// Update patient fields if provided
-	if request.Name != "" {
-		patient.Name = request.Name
-	}
-	if request.Age != 0 {
-		patient.Age = request.Age
-	}
-	if request.Gender != "" {
-		patient.Gender = request.Gender
-	}
-	if request.ContactInfo != "" {
-		patient.ContactInfo = request.ContactInfo
-	}
-	if request.MedicalNotes != "" {
-		patient.MedicalNotes = request.MedicalNotes
-	}
+	// Set ID from path
+	patient.ID = uint(id)
 
 	// Update patient
-	err = c.patientService.Update(patient)
+	err = c.patientService.Update(&patient)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -1,8 +1,9 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // Gender type for patient gender
@@ -17,12 +18,12 @@ const (
 // Patient represents a patient in the system
 type Patient struct {
 	gorm.Model
-	Name         string `gorm:"not null"`
-	Age          int    `gorm:"not null"`
-	Gender       Gender `gorm:"not null"`
-	ContactInfo  string `gorm:"not null"`
-	MedicalNotes string
-	CreatedBy    uint `gorm:"not null"`
+	Name         string `gorm:"not null" json:"name" binding:"required"`
+	Age          int    `gorm:"not null" json:"age" binding:"required,min=0,max=150"`
+	Gender       Gender `gorm:"not null" json:"gender" binding:"required,oneof=male female other"`
+	ContactInfo  string `gorm:"not null" json:"contact_info" binding:"required"`
+	MedicalNotes string `json:"medical_notes"`
+	CreatedBy    uint   `gorm:"not null" json:"created_by" binding:"required"`
 }
 
 // TableName overrides the table name
@@ -81,9 +82,9 @@ type UpdateMedicalNotesRequest struct {
 
 // PatientSearchRequest is the DTO for searching patients
 type PatientSearchRequest struct {
-	Name        string `form:"name"`
-	AgeMin      int    `form:"age_min" binding:"omitempty,min=0"`
-	AgeMax      int    `form:"age_max" binding:"omitempty,max=150"`
-	Gender      Gender `form:"gender"`
-	ContactInfo string `form:"contact_info"`
+	Name        string `form:"name" binding:"omitempty"`
+	AgeMin      int    `form:"age_min" binding:"omitempty,min=0,max=150"`
+	AgeMax      int    `form:"age_max" binding:"omitempty,min=0,max=150,gtefield=AgeMin"`
+	Gender      Gender `form:"gender" binding:"omitempty,oneof=male female other"`
+	ContactInfo string `form:"contact_info" binding:"omitempty"`
 }
